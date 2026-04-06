@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A&O Planner · tecis Bereich Dao</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0d1b2a;
+  --navy-mid: #1a2d42;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --gold-pale: #fdf3dc;
+  --cream: #faf8f4;
+  --cream-dark: #f0ece3;
+  --text: #1a1a1a;
+  --text-mid: #4a4a4a;
+  --text-muted: #888;
+  --border: rgba(0,0,0,0.07);
+  --border-strong: rgba(0,0,0,0.13);
+  --white: #ffffff;
+  --green: #1a6b4a;
+  --green-pale: #e8f5ee;
+  --red: #8b2020;
+  --red-pale: #faeaea;
+  --blue: #1a3f6b;
+  --blue-pale: #e8eef8;
+  --amber: #7a5200;
+  --amber-pale: #fff8e8;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.05);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); font-size: 14px; line-height: 1.6; }
+
+/* HEADER */
+.app-header {
+  background: var(--navy);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.header-brand { display: flex; align-items: center; gap: 14px; }
+.brand-name { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--white); letter-spacing: -0.3px; }
+.brand-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.2); }
+.brand-sub { font-size: 11px; color: var(--gold); letter-spacing: 1.2px; text-transform: uppercase; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.saved-toast { font-size: 12px; color: var(--green); background: var(--green-pale); padding: 4px 12px; border-radius: 20px; display: none; align-items: center; }
+.btn-save { padding: 7px 18px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: var(--white); transition: all 0.15s; }
+.btn-save:hover { background: rgba(255,255,255,0.18); }
+
+/* TAB NAV */
+.tab-nav {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  overflow-x: auto;
+  padding: 0 20px;
+  gap: 2px;
+  scrollbar-width: none;
+}
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 14px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--navy); border-bottom-color: var(--gold); }
+
+/* CONTENT */
+.content { padding: 22px 24px; max-width: 860px; margin: 0 auto; }
+.tab-page { display: none; }
+.tab-page.active { display: block; }
+
+/* SECTION HEADER */
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.section-num { width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: var(--gold); font-family: 'DM Serif Display', serif; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--navy); }
+.section-sub { font-size: 12px; color: var(--text-muted); }
+
+/* CARDS */
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 12px; box-shadow: var(--shadow); }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.card-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--navy); }
+.card-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* BADGES */
+.badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.badge-green { background: var(--green-pale); color: var(--green); }
+.badge-red { background: var(--red-pale); color: var(--red); }
+.badge-blue { background: var(--blue-pale); color: var(--blue); }
+
+/* FORM */
+.form-group label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+.form-group input[type=text], .form-group input[type=date], .form-group textarea {
+  width: 100%; padding: 8px 11px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--white); transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+.form-group textarea { resize: vertical; line-height: 1.6; min-height: 68px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+
+.inline-input { width: 100%; padding: 8px 11px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text); background: var(--white); }
+.inline-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+textarea.inline-input { resize: vertical; line-height: 1.6; }
+
+/* SCRIPT BLOCKS */
+.script-block { background: var(--blue-pale); border-left: 3px solid var(--blue); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 12px 14px; margin-bottom: 8px; }
+.script-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--blue); margin-bottom: 5px; }
+.script-text { font-size: 13px; color: var(--text); line-height: 1.65; font-style: italic; }
+.alt-block { background: var(--red-pale); border-left: 3px solid var(--red); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 12px 14px; margin-bottom: 8px; }
+.alt-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--red); margin-bottom: 5px; }
+.tip-box { background: var(--cream-dark); border-radius: var(--radius-sm); padding: 9px 13px; font-size: 12px; color: var(--text-mid); margin-bottom: 8px; display: flex; gap: 8px; align-items: flex-start; }
+.tip-arrow { color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+/* CHECKLIST */
+.check-item { display: flex; align-items: flex-start; gap: 11px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.check-item:last-child { border-bottom: none; }
+.check-box { width: 17px; height: 17px; border: 1.5px solid var(--border-strong); border-radius: 4px; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.check-box.checked { background: var(--navy); border-color: var(--navy); }
+.check-box.checked::after { content: ''; width: 4px; height: 8px; border: 2px solid white; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); display: block; }
+.check-label { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+/* PHASE NAV */
+.phase-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.phase-btn { padding: 7px 15px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border-strong); background: var(--white); color: var(--text-mid); cursor: pointer; transition: all 0.15s; }
+.phase-btn:hover { background: var(--cream-dark); }
+.phase-btn.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.phase-section { display: none; }
+.phase-section.active { display: block; }
+
+/* PROFILE */
+.profile-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.profile-chip { padding: 5px 13px; border-radius: 20px; font-size: 12.5px; border: 1px solid var(--border-strong); cursor: pointer; background: var(--white); color: var(--text-mid); transition: all 0.15s; }
+.profile-chip:hover { background: var(--cream-dark); }
+.profile-chip.active { background: var(--green-pale); color: var(--green); border-color: #a3d4bb; }
+
+/* EINWAND INTEGRIERT */
+.einwand-section { margin-top: 18px; border-top: 1px dashed var(--border-strong); padding-top: 14px; }
+.einwand-section-title { display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); cursor: pointer; user-select: none; margin-bottom: 0; }
+.einwand-toggle { font-size: 10px; transition: transform 0.2s; }
+.einwand-section.open .einwand-toggle { transform: rotate(180deg); }
+.einwand-list { display: none; margin-top: 10px; gap: 7px; flex-direction: column; }
+.einwand-section.open .einwand-list { display: flex; }
+.einwand-item { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.einwand-trigger { display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; cursor: pointer; background: var(--white); transition: background 0.12s; gap: 10px; }
+.einwand-trigger:hover { background: var(--cream); }
+.einwand-quote { font-size: 13px; color: var(--text-mid); font-style: italic; flex: 1; }
+.einwand-arrow { font-size: 10px; color: var(--text-muted); transition: transform 0.2s; flex-shrink: 0; }
+.einwand-item.open .einwand-arrow { transform: rotate(180deg); }
+.einwand-body { display: none; border-top: 1px solid var(--border); padding: 12px 14px; background: var(--cream); }
+.einwand-item.open .einwand-body { display: block; }
+.einwand-antwort { font-size: 13px; color: var(--text); line-height: 1.65; font-style: italic; margin-bottom: 7px; }
+.einwand-tip { font-size: 12px; color: var(--text-muted); display: flex; gap: 6px; }
+.einwand-tip-arrow { color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+/* VORBEREITUNG */
+.prep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.prep-stat { background: var(--cream); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+.prep-stat label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+.prep-stat input { width: 100%; border: none; background: none; font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--navy); outline: none; }
+.prep-stat input::placeholder { color: #ccc; }
+.trend-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.trend-btn { padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border-strong); cursor: pointer; background: var(--white); color: var(--text-muted); transition: all 0.12s; }
+.trend-btn.up.active { background: var(--green-pale); color: var(--green); border-color: #a3d4bb; }
+.trend-btn.down.active { background: var(--red-pale); color: var(--red); border-color: #f0b0b0; }
+.trend-btn.flat.active { background: var(--amber-pale); color: var(--amber); border-color: #e8c97a; }
+
+/* CONSEQUENCE */
+.con-block { background: var(--cream); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 8px; }
+.con-title { font-weight: 600; font-size: 13px; color: var(--navy); margin-bottom: 8px; display: flex; align-items: center; gap: 9px; }
+.stufe-badge { width: 20px; height: 20px; border-radius: 50%; background: var(--navy); color: white; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.con-step { display: flex; gap: 9px; padding: 4px 0; font-size: 13px; color: var(--text-mid); line-height: 1.5; }
+.step-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); margin-top: 8px; flex-shrink: 0; }
+.trott-warning { background: var(--amber-pale); border: 1px solid #e8c97a; border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px; display: flex; gap: 10px; align-items: flex-start; }
+.trott-icon { font-size: 16px; flex-shrink: 0; }
+.trott-title { font-weight: 600; font-size: 13px; color: var(--amber); margin-bottom: 2px; }
+.trott-text { font-size: 12.5px; color: #8a6820; line-height: 1.5; }
+.stufe-btns { display: flex; gap: 7px; margin-bottom: 8px; flex-wrap: wrap; }
+.stufe-btn { padding: 7px 18px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border: 1px solid var(--border-strong); background: var(--white); cursor: pointer; transition: all 0.15s; color: var(--text-mid); }
+.stufe-btn:hover { background: var(--cream-dark); }
+.stufe-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+.stufe-result { font-size: 13px; color: var(--text-mid); padding: 7px 11px; background: var(--cream); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
+/* TRACKER */
+.tracker-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.tracker-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.tracker-table th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); padding: 7px 8px; border-bottom: 2px solid var(--border-strong); background: var(--cream); }
+.tracker-table td { padding: 5px 7px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.tracker-table tr:hover td { background: #fafaf8; }
+.tracker-table input[type=text], .tracker-table input[type=date] { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--text); background: transparent; transition: all 0.12s; }
+.tracker-table input:focus { outline: none; border-color: var(--gold); background: white; }
+.tracker-table select { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 4px 3px; font-family: 'DM Sans', sans-serif; font-size: 12px; background: transparent; color: var(--text); cursor: pointer; }
+.tracker-table select:focus { outline: none; border-color: var(--gold); background: white; }
+.tracker-name-cell { font-weight: 500; color: var(--navy); }
+.delete-row { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 2px 5px; border-radius: 4px; }
+.delete-row:hover { background: var(--red-pale); color: var(--red); }
+.tracker-summary { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.tracker-pill { font-size: 12px; padding: 3px 11px; border-radius: 20px; font-weight: 500; }
+.tracker-pill.open { background: var(--amber-pale); color: var(--amber); }
+.tracker-pill.done { background: var(--green-pale); color: var(--green); }
+.tracker-pill.broken { background: var(--red-pale); color: var(--red); }
+
+.btn { padding: 7px 16px; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; border: 1px solid var(--border-strong); background: var(--white); color: var(--text); transition: all 0.15s; }
+.btn:hover { background: var(--cream-dark); }
+.btn.gold { background: var(--gold); color: var(--white); border-color: var(--gold); }
+.btn.gold:hover { background: var(--gold-light); color: var(--navy); }
+.btn.green-btn { background: var(--green); color: var(--white); border-color: var(--green); }
+.btn.sm { padding: 4px 11px; font-size: 12px; }
+
+/* WA */
+.wa-header-bar { display: flex; align-items: center; gap: 10px; background: #075e54; color: white; padding: 11px 14px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; font-size: 13px; font-weight: 500; }
+.wa-dot { width: 7px; height: 7px; border-radius: 50%; background: #25d366; }
+.wa-output { background: #e8f5e9; border: 1px solid #c8e6c9; border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); padding: 14px; font-size: 13px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; min-height: 100px; color: var(--text); font-family: -apple-system, 'Helvetica Neue', sans-serif; }
+
+@media (max-width: 600px) {
+  .form-grid, .prep-grid { grid-template-columns: 1fr; }
+  .content { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="header-brand">
+    <div class="brand-name">A&O Planner</div>
+    <div class="brand-divider"></div>
+    <div class="brand-sub">tecis · Bereich Dao</div>
+  </div>
+  <div class="header-right">
+    <div class="saved-toast" id="savedToast">✓ Gespeichert</div>
+    <button class="btn-save" onclick="saveData()">Speichern</button>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('vorbereitung',this)">🔍 Berater-Check</button>
+  <button class="tab-btn" onclick="switchTab('ao',this)">💬 A&O Gespräch</button>
+  <button class="tab-btn" onclick="switchTab('tracker',this)">✅ Commitment-Tracker</button>
+  <button class="tab-btn" onclick="switchTab('whatsapp',this)">📱 WhatsApp</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- VORBEREITUNG -->
+  <div class="tab-page active" id="page-vorbereitung">
+    <div class="section-header">
+      <div class="section-num">0</div>
+      <div><div class="section-title">Berater-Check</div><div class="section-sub">Zahlen & Kontext vor dem Gespräch</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Berater & Kontext</div></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Berater Name</label><input type="text" id="v-name" placeholder="z.B. Max Müller" oninput="syncName()"></div>
+        <div class="form-group"><label>Gesprächsdatum</label><input type="date" id="v-datum"></div>
+      </div>
+      <div class="form-group">
+        <label>Berater-Profil</label>
+        <div class="profile-row">
+          <div class="profile-chip active" onclick="selectProfile(this,'willig')">Willig, aber inaktiv</div>
+          <div class="profile-chip" onclick="selectProfile(this,'trotz')">Trott-Modus</div>
+          <div class="profile-chip" onclick="selectProfile(this,'unter')">Unter Potenzial</div>
+          <div class="profile-chip" onclick="selectProfile(this,'neu')">Neu / unerfahren</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Aktuelle Zahlen</div></div>
+      <div class="prep-grid">
+        <div class="prep-stat"><label>S1-Termine letzte Woche</label><input type="text" id="v-s1-lw" placeholder="0"></div>
+        <div class="prep-stat"><label>S1-Termine diese Woche (fix)</label><input type="text" id="v-s1-dw" placeholder="0"></div>
+        <div class="prep-stat"><label>Abschlüsse letzter Monat</label><input type="text" id="v-abschl" placeholder="0"></div>
+        <div class="prep-stat"><label>Kontakte im Vorlauf</label><input type="text" id="v-vorlauf" placeholder="0"></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px">Trend der letzten 4 Wochen</div>
+      <div class="trend-row">
+        <div class="trend-btn up" onclick="setTrend('up',this)">↑ Steigend</div>
+        <div class="trend-btn flat" onclick="setTrend('flat',this)">→ Stagnierend</div>
+        <div class="trend-btn down" onclick="setTrend('down',this)">↓ Fallend</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Gesprächsstrategie</div></div>
+      <div class="tip-box"><span class="tip-arrow">→</span><span id="strategie-hint">Profil wählen um die passende Strategie zu sehen.</span></div>
+      <div class="form-group" style="margin-top:10px">
+        <label>Eigene Notizen zur Vorbereitung</label>
+        <textarea id="v-notizen" placeholder="Was ist wichtig zu wissen? Besondere Situation, letzte Commitments, Stimmung..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- A&O GESPRÄCH -->
+  <div class="tab-page" id="page-ao">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div><div class="section-title">A&O Gespräch</div><div class="section-sub">Leitfaden · 5 Phasen · Einwände kontextuell integriert</div></div>
+    </div>
+
+    <div class="phase-nav">
+      <button class="phase-btn active" onclick="goPhase(0,this)">1 · Einstieg</button>
+      <button class="phase-btn" onclick="goPhase(1,this)">2 · Analyse</button>
+      <button class="phase-btn" onclick="goPhase(2,this)">3 · Strategie</button>
+      <button class="phase-btn" onclick="goPhase(3,this)">4 · Commitments</button>
+      <button class="phase-btn" onclick="goPhase(4,this)">5 · Konsequenz</button>
+    </div>
+
+    <!-- PHASE 0 -->
+    <div class="phase-section active" id="ph-0">
+      <div id="pr-willig">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Einstieg</div><span class="badge badge-green">Coachend</span></div>
+          <div class="script-block"><div class="script-label">Eröffnung</div><div class="script-text">„Hey [Name], schön dass wir uns heute Zeit nehmen. Ich möchte mit dir gemeinsam schauen, wo du gerade stehst und was wir konkret tun können, damit du in den nächsten Wochen richtig in die Gänge kommst. Einverstanden?"</div></div>
+          <div class="script-block"><div class="script-label">Ankerpunkt setzen</div><div class="script-text">„Wenn du in 3 Monaten auf diese Zeit zurückschaust – was müsste passiert sein, damit du sagst: Das war ein echter Wendepunkt für mich?"</div></div>
+          <div class="tip-box"><span class="tip-arrow">→</span><span>Antwort nicht unterbrechen. Das wird später der Hebel für Verbindlichkeit.</span></div>
+        </div>
+      </div>
+      <div id="pr-trotz" style="display:none">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Einstieg – Trott-Modus</div><span class="badge badge-red">Direkt</span></div>
+          <div class="alt-block"><div class="alt-label">Klare Ansage</div><div class="script-text">„[Name], ich möchte heute anders ins Gespräch gehen als sonst. Wir haben uns die letzten Wochen oft ausgetauscht, aber ich sehe keine Veränderung. Das möchte ich offen ansprechen – nicht als Vorwurf, sondern weil ich weiß, was du drauf hast."</div></div>
+          <div class="script-block"><div class="script-label">Realität benennen</div><div class="script-text">„Konkret: In den letzten [X] Wochen waren es [Y] Termine. Dein Potenzial liegt deutlich darüber. Was hält dich zurück?"</div></div>
+          <div class="tip-box"><span class="tip-arrow">→</span><span>Stille aushalten. Die erste Antwort ist selten die echte Antwort.</span></div>
+        </div>
+      </div>
+      <div id="pr-unter" style="display:none">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Einstieg – Unter Potenzial</div><span class="badge badge-blue">Situativ</span></div>
+          <div class="script-block"><div class="script-label">Mit Zahlen einsteigen</div><div class="script-text">„[Name], ich schau mir deine Zahlen an und sehe: Du hast Termine, du hast Abschlüsse – aber da ist noch viel Luft nach oben. Lass uns heute konkret besprechen, woran das liegt."</div></div>
+          <div class="script-block"><div class="script-label">Vergleich einsetzen</div><div class="script-text">„Berater auf deinem Level machen im Schnitt [X] S1-Termine pro Woche. Du machst [Y]. Was denkst du, wo der Unterschied liegt?"</div></div>
+        </div>
+      </div>
+      <div id="pr-neu" style="display:none">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Einstieg – Neu / Unerfahren</div><span class="badge badge-green">Coachend</span></div>
+          <div class="script-block"><div class="script-label">Sicherheit geben</div><div class="script-text">„[Name], dieses Gespräch ist kein Verhör – ich möchte verstehen, wie du die letzten Wochen erlebt hast und was du brauchst, um deinen ersten echten Rhythmus zu finden."</div></div>
+          <div class="script-block"><div class="script-label">Konkret machen</div><div class="script-text">„Was war dein größter Moment in den letzten Wochen? Und was hat dich am meisten gebremst?"</div></div>
+          <div class="tip-box"><span class="tip-arrow">→</span><span>Hier coachen, nicht fordern. Verbindlichkeit kommt erst ab Phase 4.</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">Notizen – Einstieg</div>
+        <textarea class="inline-input" id="n-einstieg" rows="3" placeholder="Was sagt der Berater? Welche Themen tauchen auf?"></textarea>
+      </div>
+    </div>
+
+    <!-- PHASE 1 -->
+    <div class="phase-section" id="ph-1">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Ist-Analyse</div><span class="badge badge-blue">Faktenbasiert</span></div>
+        <div class="script-block"><div class="script-label">Zahlen vorlegen</div><div class="script-text">„Wie viele Termine hattest du letzte Woche im Vorlauf? Wie viele hast du diese Woche schon fix?"</div></div>
+        <div class="script-block"><div class="script-label">Kundenstamm durchgehen</div><div class="script-text">„Geh mal deinen Kundenstamm durch: Wer wartet auf einen Rückruf? Wer ist noch nicht terminiert? Wer kommt aufs nächste Event?"</div></div>
+        <div class="divider"></div>
+        <div style="font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:8px">Status erfassen</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Kontakte im Vorlauf gezählt</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Rückruf-Liste besprochen</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Event-Potenziale identifiziert</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Blockaden & Ursachen</div><span class="badge badge-green">Coachend</span></div>
+        <div class="script-block"><div class="script-label">Ursache erfragen</div><div class="script-text">„Was glaubst du selbst, warum die Termine nicht kommen? Ist es die Ansprache, die Zeit, die Motivation – oder etwas anderes?"</div></div>
+        <div class="alt-block"><div class="alt-label">Wenn Ausreden kommen</div><div class="script-text">„Das verstehe ich. Und trotzdem: Was wäre konkret möglich, wenn du dieses Eine Problem nicht hättest?"</div></div>
+        <div class="tip-box"><span class="tip-arrow">→</span><span>Nie die Ausrede akzeptieren ohne nachzufragen. Weiterleiten, nicht kämpfen.</span></div>
+        <div class="einwand-section" id="ew-analyse">
+          <div class="einwand-section-title" onclick="toggleEW('ew-analyse')">
+            <span>Typische Einwände in dieser Phase</span><span class="einwand-toggle">▼</span>
+          </div>
+          <div class="einwand-list">
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Ich hab grad privat viel um die Ohren."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Das glaube ich dir. Wie viel Zeit pro Tag brauchst du, um 2–3 Kontakte anzurufen? 20 Minuten? Wir reden nicht von Vollgas – wir reden von einer Sache, die du selbst kontrollieren kannst. Was wäre heute dein erster Schritt?"</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Auf das Machbare lenken, nicht auf das Private eingehen.</span></div></div></div>
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Ich hab zu wenig Zeit neben dem Job / der Familie."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Was ist dein WHY? Warum hast du damals bei tecis angefangen? Die Zeit wird nicht mehr – aber die Entscheidung, was damit passiert, liegt bei dir. Berater mit Ergebnissen haben dieselbe Zeit. Was machen die anders?"</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>WHY reaktivieren. Nicht diskutieren.</span></div></div></div>
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Ich bin nicht so der Verkäufertyp."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Was ist für dich ein Verkäufertyp? Die erfolgreichsten Berater bei tecis sind Menschen, die zuhören und echte Lösungen suchen. Das ist kein Talent – das ist eine Entscheidung."</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Selbstbild sanft konfrontieren. Nicht argumentieren.</span></div></div></div>
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Ich weiß nicht, ob das langfristig was für mich ist."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Das ist eine wichtige Frage. Was fehlt dir, um sicher zu sein? Ist es das Geld, die Struktur, das Umfeld? Lass uns das ehrlich besprechen, bevor wir weitermachen."</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Nicht pushen. Echte Ursache herausfinden. Ggf. Stufe-2-Gespräch vorbereiten.</span></div></div></div>
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Letzte Woche lief es besser, diese Woche war einfach nichts."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Was war der Unterschied konkret? Nicht das Ergebnis – die Aktivität. Wie viele Anrufe letzte Woche, wie viele diese? Wir schauen auf das, was du kontrollieren kannst."</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Immer auf Aktivität zurückführen, nicht auf Ergebnisse.</span></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">Notizen – Analyse</div>
+        <textarea class="inline-input" id="n-analyse" rows="3" placeholder="Zahlen, Blockaden, echte Ursachen..."></textarea>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase-section" id="ph-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Kontaktstrategie</div><span class="badge badge-blue">Situativ</span></div>
+        <div class="script-block"><div class="script-label">Strategie klären</div><div class="script-text">„Für jeden Kontakt gibt es einen passenden nächsten Schritt: Wer soll angerufen werden? Wer bekommt eine WhatsApp? Wer wird zum Event eingeladen?"</div></div>
+        <div class="divider"></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Warme Kontakte → direkt anrufen zur Terminierung</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Kalte Kontakte → aufwärmen via WhatsApp / Social</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Event-geeignete Kontakte → konkret einladen</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">VP-Potenziale → separat qualifizieren</div></div>
+        <div class="einwand-section" id="ew-kontakte">
+          <div class="einwand-section-title" onclick="toggleEW('ew-kontakte')">
+            <span>Einwände zu Kontakten & Pipeline</span><span class="einwand-toggle">▼</span>
+          </div>
+          <div class="einwand-list">
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Meine Kontakte sind alle durch."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Wie viele Namen stehen in deinem Handy? Schau jetzt mal rein. Wie viele hast du in den letzten 6 Monaten wirklich angesprochen? Die meisten Berater haben 200+ Kontakte und sprechen aktiv mit 20. Da steckt noch viel."</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Handy-Check direkt im Gespräch machen lassen.</span></div></div></div>
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Die Leute wollen keinen Termin machen."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Wie sprichst du sie an? Zeig mir mal, was du schreibst oder sagst. Meistens liegt es nicht am Kontakt, sondern an der Formulierung. Lass uns das jetzt durchgehen und direkt ausprobieren."</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Zur konkreten Ansprache-Analyse führen. Gemeinsam formulieren.</span></div></div></div>
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Ich warte noch auf Rückmeldung von X."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Seit wann wartest du? Warten ist keine Strategie. Was hast du neben diesem einen Kontakt noch in der Pipeline?"</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Fokus auf gesamte Pipeline lenken, nicht auf einen Kontakt.</span></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Sofortmaßnahmen – jetzt umsetzen</div><span class="badge badge-red">Direkt</span></div>
+        <div class="script-block"><div class="script-label">Direkte Umsetzung</div><div class="script-text">„Dann machen wir das jetzt direkt. Ruf den ersten Kontakt an, während wir hier sitzen. Oder schick die WhatsApp jetzt. Ich bin dabei."</div></div>
+        <div class="alt-block"><div class="alt-label">Wenn Zögern kommt</div><div class="script-text">„Was hält dich gerade ab? Ich helfe dir mit der Formulierung. Aber wir machen es jetzt – sonst landet es wieder auf der Liste."</div></div>
+        <div class="tip-box"><span class="tip-arrow">→</span><span>Wer hier nicht handelt, handelt auch morgen nicht.</span></div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase-section" id="ph-3">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Verbindliche Commitments</div><span class="badge badge-red">Verbindlich</span></div>
+        <div class="script-block"><div class="script-label">Commitment einfordern</div><div class="script-text">„Jetzt machen wir das konkret und verbindlich. Ich frage dich direkt – und ich erwarte klare Antworten, keine ungefähren."</div></div>
+        <div class="divider"></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Wie viele S1-Termine fix bis nächste Woche?</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Welche Kontakte werden diese Woche angerufen? (Namen nennen)</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Wann genau? (Uhrzeit & Tag festlegen)</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Welche WhatsApp-Nachrichten gehen heute noch raus?</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Wer kommt zum nächsten Event? (mind. X Namen)</div></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div><div class="check-label">Was ist der nächste Check-in? (Datum & Format)</div></div>
+        <div class="einwand-section" id="ew-commitments">
+          <div class="einwand-section-title" onclick="toggleEW('ew-commitments')">
+            <span>Einwände bei gebrochenem Commitment</span><span class="einwand-toggle">▼</span>
+          </div>
+          <div class="einwand-list">
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Ich hab's versucht, aber es hat nicht geklappt."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Was genau hast du versucht? Wann, wie oft, mit welcher Formulierung? Ich frage nicht um dich zu kontrollieren – ich möchte verstehen wo es hakt."</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Konkretisieren lassen. Vage Antworten = vage Commitments.</span></div></div></div>
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Das hab ich irgendwie vergessen."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Okay. Dann machen wir heute etwas anderes: Wir tragen es direkt jetzt in deinen Kalender ein – mit Datum und Uhrzeit. Was du nicht terminierst, passiert nicht. Hol kurz dein Handy raus."</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Direkte Kalender-Aktion im Gespräch. Nicht vertagen.</span></div></div></div>
+            <div class="einwand-item"><div class="einwand-trigger" onclick="toggleEinwand(this)"><div class="einwand-quote">„Es kam immer was dazwischen."</div><div class="einwand-arrow">▼</div></div><div class="einwand-body"><div class="einwand-antwort">„Was genau? 'Es kam was dazwischen' ist immer wahr – die Frage ist, ob du es trotzdem gemacht hättest wenn es wirklich wichtig für dich wäre. Was müsste passieren, damit es beim nächsten Mal Priorität hat?"</div><div class="einwand-tip"><span class="einwand-tip-arrow">→</span><span>Prioritätsfrage stellen. Nicht die Situation retten.</span></div></div></div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="form-group">
+          <label>Konkrete Commitments (→ werden in WhatsApp übernommen)</label>
+          <textarea id="commitments-text" class="inline-input" rows="4" placeholder="z.B. 3 S1-Termine bis Fr · Anrufe Mo+Di 10 Uhr · WA heute Abend an Liste A · Event: Max, Julia, Thomas"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Commitment festigen</div></div>
+        <div class="script-block"><div class="script-label">Abschluss-Statement</div><div class="script-text">„Gut. Das ist jetzt kein Plan, das ist eine Zusage. Ich halte dich daran fest – weil ich weiß, dass du das kannst. Wir reden [Datum]. Bis dahin: Mach es."</div></div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase-section" id="ph-4">
+      <div class="trott-warning"><div class="trott-icon">⚠️</div><div><div class="trott-title">Trott-Diagnose</div><div class="trott-text">Wenn ein Berater 2× hintereinander Commitments nicht einhält, ist das Gespräch nicht das Problem – es ist das System. Jetzt muss die Konsequenz-Logik greifen.</div></div></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Konsequenz-Eskalation</div></div>
+        <div class="con-block"><div class="con-title"><div class="stufe-badge">1</div>Spiegel vorhalten – 1× nicht eingehalten</div>
+          <div class="con-step"><div class="step-dot"></div><div>Fakten benennen: „Wir haben X vereinbart. Es ist nicht passiert."</div></div>
+          <div class="con-step"><div class="step-dot"></div><div>Keine Diskussion: „Ich mache dir keinen Vorwurf – ich stelle fest."</div></div>
+          <div class="con-step"><div class="step-dot"></div><div>Neu vereinbaren mit erhöhter Verbindlichkeit: täglicher Check-in für 1 Woche</div></div>
+        </div>
+        <div class="con-block"><div class="con-title"><div class="stufe-badge">2</div>Klärungsgespräch – 2× nicht eingehalten</div>
+          <div class="con-step"><div class="step-dot"></div><div>„Ich muss dich direkt fragen: Willst du das wirklich noch?"</div></div>
+          <div class="con-step"><div class="step-dot"></div><div>Konsequenz benennen: „Wenn sich nichts ändert, kann ich dir nicht mehr aktiv helfen."</div></div>
+          <div class="con-step"><div class="step-dot"></div><div>Entscheidung beim Berater lassen – aber klar machen dass sie eine Entscheidung ist</div></div>
+        </div>
+        <div class="con-block"><div class="con-title"><div class="stufe-badge">3</div>Konsequenz ziehen – 3× nicht eingehalten</div>
+          <div class="con-step"><div class="step-dot"></div><div>Reduktion der aktiven Betreuung kommunizieren</div></div>
+          <div class="con-step"><div class="step-dot"></div><div>Ressourcen auf entwicklungsbereite Berater umschichten</div></div>
+          <div class="con-step"><div class="step-dot"></div><div>Berater bleibt im Team, bekommt aber keine prioritäre Unterstützung mehr</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Klärungsgespräch Stufe 2</div><span class="badge badge-red">Direkt</span></div>
+        <div class="alt-block"><div class="alt-label">Einstieg</div><div class="script-text">„[Name], wir kennen uns jetzt eine Weile und ich schätze dich. Genau deshalb rede ich Klartext: Wir haben jetzt zweimal dasselbe Gespräch geführt. Die Vereinbarungen stehen – aber passiert ist nichts. Ich muss wissen: Was willst du wirklich?"</div></div>
+        <div class="tip-box"><span class="tip-arrow">→</span><span>Wer keine Konsequenz zieht, macht A&O zur Simulation. Das schadet dem ganzen Team.</span></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Aktuelle Stufe notieren</div></div>
+        <div class="stufe-btns">
+          <button class="stufe-btn" id="sb1" onclick="setStufe(1)">Stufe 1</button>
+          <button class="stufe-btn" id="sb2" onclick="setStufe(2)">Stufe 2</button>
+          <button class="stufe-btn" id="sb3" onclick="setStufe(3)">Stufe 3</button>
+        </div>
+        <div class="stufe-result" id="stufe-result">Noch keine Stufe gewählt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACKER -->
+  <div class="tab-page" id="page-tracker">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div><div class="section-title">Commitment-Tracker</div><div class="section-sub">Offene Zusagen aller Berater im Überblick</div></div>
+    </div>
+    <div class="card">
+      <div class="tracker-header">
+        <div class="card-title">Offene Commitments</div>
+        <button class="btn sm" onclick="addTrackerRow()">+ Commitment</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tracker-table">
+          <thead><tr>
+            <th style="width:120px">Berater</th>
+            <th>Commitment</th>
+            <th style="width:100px">Fällig am</th>
+            <th style="width:100px">A&O-Datum</th>
+            <th style="width:105px">Status</th>
+            <th style="width:30px"></th>
+          </tr></thead>
+          <tbody id="tracker-body"></tbody>
+        </table>
+      </div>
+      <div class="tracker-summary" id="tracker-summary"></div>
+    </div>
+    <div class="card">
+      <div class="tracker-header">
+        <div><div class="card-title">Konsequenz-Übersicht</div><div class="card-sub">Wer ist auf welcher Stufe?</div></div>
+        <button class="btn sm" onclick="addStufeRow()">+ Eintrag</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tracker-table">
+          <thead><tr>
+            <th style="width:130px">Berater</th>
+            <th style="width:85px">Stufe</th>
+            <th style="width:105px">Seit</th>
+            <th>Notiz</th>
+            <th style="width:30px"></th>
+          </tr></thead>
+          <tbody id="stufe-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHATSAPP -->
+  <div class="tab-page" id="page-whatsapp">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div><div class="section-title">WhatsApp Nachbereitung</div><div class="section-sub">Commitments automatisch als Nachricht generieren</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Gesprächsdetails</div></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Berater Name</label><input type="text" id="wa-name" placeholder="z.B. Tobias"></div>
+        <div class="form-group"><label>Nächster Check-in</label><input type="date" id="wa-checkin"></div>
+      </div>
+      <button class="btn gold" onclick="generateWA()">WhatsApp generieren</button>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Vorschau</div></div>
+      <div class="wa-header-bar"><div class="wa-dot"></div>WhatsApp · Nachbereitung A&O</div>
+      <div class="wa-output" id="wa-output">← Erst oben auf „WhatsApp generieren" klicken.</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn green-btn" onclick="copyWA()">Nachricht kopieren</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Vorlage anpassen</div></div>
+      <textarea class="inline-input" id="wa-custom" rows="10" placeholder="Vorlage erscheint nach dem Generieren hier..."></textarea>
+      <div style="margin-top:8px"><button class="btn" onclick="copyCustom()">Eigene Vorlage kopieren</button></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let activeTrend = '', activeProfile = 'willig', currentStufe = 0;
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+function selectProfile(el, type) {
+  document.querySelectorAll('.profile-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active'); activeProfile = type;
+  ['willig','trotz','unter','neu'].forEach(t => { const e = document.getElementById('pr-'+t); if(e) e.style.display = t===type?'block':'none'; });
+  const hints = { willig:'Coachenden Einstieg wählen. Ankerpunkt setzen. Motivation reaktivieren.', trotz:'Direkt einsteigen mit Fakten. Konsequenz-Logik parat haben.', unter:'Mit Zahlen konfrontieren. Vergleich zu Peers nutzen. Klare Erwartung formulieren.', neu:'Sicherheit geben. Kleinen ersten Schritt definieren. Verbindlichkeit sanft aufbauen.' };
+  document.getElementById('strategie-hint').textContent = hints[type] || '';
+}
+
+function setTrend(type, el) {
+  document.querySelectorAll('.trend-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active'); activeTrend = type;
+}
+
+function syncName() { document.getElementById('wa-name').value = document.getElementById('v-name').value; }
+
+function goPhase(n, btn) {
+  document.querySelectorAll('.phase-section').forEach((s,i) => s.classList.toggle('active', i===n));
+  document.querySelectorAll('.phase-btn').forEach((b,i) => b.classList.toggle('active', i===n));
+}
+
+function setStufe(n) {
+  currentStufe = n;
+  ['sb1','sb2','sb3'].forEach((id,i) => { const e=document.getElementById(id); if(e) e.classList.toggle('active', i+1===n); });
+  const labels = ['Stufe 1 aktiv – Spiegel vorhalten','Stufe 2 aktiv – Klärungsgespräch','Stufe 3 aktiv – Konsequenz ziehen'];
+  document.getElementById('stufe-result').textContent = labels[n-1] || '';
+}
+
+function toggleEW(id) { document.getElementById(id).classList.toggle('open'); }
+function toggleEinwand(trigger) { trigger.parentElement.classList.toggle('open'); }
+
+function addTrackerRow(name,commitment,faellig,datum,status) {
+  const tbody = document.getElementById('tracker-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="tracker-name-cell"><input type="text" placeholder="Berater" value="${name||''}"></td><td><input type="text" placeholder="Commitment beschreiben" value="${commitment||''}"></td><td><input type="date" value="${faellig||''}"></td><td><input type="date" value="${datum||''}"></td><td><select onchange="updateTrackerSummary()"><option value="offen" ${status==='offen'?'selected':''}>Offen</option><option value="erledigt" ${status==='erledigt'?'selected':''}>Erledigt</option><option value="gebrochen" ${status==='gebrochen'?'selected':''}>Gebrochen</option></select></td><td><button class="delete-row" onclick="this.closest('tr').remove();updateTrackerSummary()">✕</button></td>`;
+  tbody.appendChild(tr); updateTrackerSummary();
+}
+
+function addStufeRow(name,stufe,seit,notiz) {
+  const tbody = document.getElementById('stufe-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="tracker-name-cell"><input type="text" placeholder="Berater" value="${name||''}"></td><td><select><option value="1" ${stufe==='1'?'selected':''}>Stufe 1</option><option value="2" ${stufe==='2'?'selected':''}>Stufe 2</option><option value="3" ${stufe==='3'?'selected':''}>Stufe 3</option></select></td><td><input type="date" value="${seit||''}"></td><td><input type="text" placeholder="Notiz" value="${notiz||''}"></td><td><button class="delete-row" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function updateTrackerSummary() {
+  let o=0,e=0,b=0;
+  document.querySelectorAll('#tracker-body select').forEach(s => { if(s.value==='offen') o++; else if(s.value==='erledigt') e++; else if(s.value==='gebrochen') b++; });
+  const sum = document.getElementById('tracker-summary');
+  sum.innerHTML = '';
+  if(o) sum.innerHTML += `<div class="tracker-pill open">${o} offen</div>`;
+  if(e) sum.innerHTML += `<div class="tracker-pill done">${e} erledigt</div>`;
+  if(b) sum.innerHTML += `<div class="tracker-pill broken">${b} gebrochen</div>`;
+}
+
+function generateWA() {
+  const name = document.getElementById('wa-name').value || '[Name]';
+  const checkin = document.getElementById('wa-checkin').value ? new Date(document.getElementById('wa-checkin').value).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}) : '[Datum eintragen]';
+  const commitments = document.getElementById('commitments-text').value || '– Noch keine Commitments eingetragen';
+  const today = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const lines = commitments.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>'• '+l).join('\n');
+  const msg = `Hey ${name} 👋\n\nKurze Zusammenfassung aus unserem heutigen A&O (${today}):\n\n📌 *Deine Commitments:*\n${lines}\n\n🗓 Nächster Check-in: ${checkin}\n\nDu weißt was zu tun ist – ich bin dabei. Mach es! 💪\n\nKim`;
+  document.getElementById('wa-output').textContent = msg;
+  document.getElementById('wa-custom').value = msg;
+}
+
+function copyWA() {
+  const text = document.getElementById('wa-output').textContent;
+  if(text.includes('←')) { alert('Bitte zuerst auf „WhatsApp generieren" klicken.'); return; }
+  copyText(text);
+}
+function copyCustom() { copyText(document.getElementById('wa-custom').value); }
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(()=>alert('✓ Kopiert!')).catch(()=>{ const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('✓ Kopiert!'); });
+}
+
+function v(id) { const e=document.getElementById(id); return e?e.value:''; }
+function sv(id,val) { const e=document.getElementById(id); if(e&&val!==undefined) e.value=val||''; }
+
+function saveData() {
+  const tracker=[]; document.querySelectorAll('#tracker-body tr').forEach(tr=>{ const inp=tr.querySelectorAll('input'); const sel=tr.querySelector('select'); tracker.push({name:inp[0]?.value,commitment:inp[1]?.value,faellig:inp[2]?.value,datum:inp[3]?.value,status:sel?.value}); });
+  const stufen=[]; document.querySelectorAll('#stufe-body tr').forEach(tr=>{ const inp=tr.querySelectorAll('input'); const sel=tr.querySelector('select'); stufen.push({name:inp[0]?.value,stufe:sel?.value,seit:inp[1]?.value,notiz:inp[2]?.value}); });
+  const data={vName:v('v-name'),vDatum:v('v-datum'),vS1lw:v('v-s1-lw'),vS1dw:v('v-s1-dw'),vAbschl:v('v-abschl'),vVorlauf:v('v-vorlauf'),vNotizen:v('v-notizen'),nEinstieg:v('n-einstieg'),nAnalyse:v('n-analyse'),commitments:v('commitments-text'),waName:v('wa-name'),waCheckin:v('wa-checkin'),waCustom:v('wa-custom'),stufe:currentStufe,trend:activeTrend,profile:activeProfile,tracker,stufen};
+  localStorage.setItem('ao_planner_sp',JSON.stringify(data));
+  const toast=document.getElementById('savedToast'); toast.style.display='flex'; setTimeout(()=>toast.style.display='none',2200);
+}
+
+function loadData() {
+  const raw=localStorage.getItem('ao_planner_sp'); if(!raw) return;
+  try {
+    const d=JSON.parse(raw);
+    sv('v-name',d.vName); sv('v-datum',d.vDatum); sv('v-s1-lw',d.vS1lw); sv('v-s1-dw',d.vS1dw);
+    sv('v-abschl',d.vAbschl); sv('v-vorlauf',d.vVorlauf); sv('v-notizen',d.vNotizen);
+    sv('n-einstieg',d.nEinstieg); sv('n-analyse',d.nAnalyse); sv('commitments-text',d.commitments);
+    sv('wa-name',d.waName); sv('wa-checkin',d.waCheckin); sv('wa-custom',d.waCustom);
+    if(d.stufe) setStufe(d.stufe);
+    if(d.trend) { const btn=document.querySelector('.trend-btn.'+d.trend); if(btn){btn.classList.add('active'); activeTrend=d.trend;} }
+    if(d.profile) { const chip=[...document.querySelectorAll('.profile-chip')].find(c=>c.getAttribute('onclick')?.includes("'"+d.profile+"'")); if(chip) selectProfile(chip,d.profile); }
+    if(d.tracker) d.tracker.forEach(r=>addTrackerRow(r.name,r.commitment,r.faellig,r.datum,r.status));
+    if(d.stufen) d.stufen.forEach(r=>addStufeRow(r.name,r.stufe,r.seit,r.notiz));
+  } catch(e) {}
+}
+
+loadData();
+setInterval(saveData, 60000);
+</script>
+</body>
+</html>
